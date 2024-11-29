@@ -11,6 +11,8 @@ from BioMime.utils.plot_functions import plot_muaps
 from BioMime.utils.params import num_mus, steps, tgt_params
 from BioMime.models.generator import Generator
 
+# python scripts/generate.py --cfg config.yaml --mode sample --model_pth ./ckp/model_linear.pth --res_path ./res
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate MUAPs')
     parser.add_argument('--cfg', type=str, default='config.yaml', help='Name of configuration file')
@@ -22,7 +24,7 @@ if __name__ == '__main__':
     parser.add_argument('--device', default='cuda', type=str, help='cuda|cpu')
 
     args = parser.parse_args()
-    cfg = update_config('./config/' + args.cfg)
+    cfg = update_config(r"C:\Users\Morten\Documents\GitHub\BioMime\BioMime\config\config.yaml")#'./config/' + args.cfg)
 
     # Check modes
     mode = args.mode

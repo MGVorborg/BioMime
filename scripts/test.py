@@ -1,11 +1,19 @@
 import sys
+import os
 sys.path.append('.')
 
 import torch
 from tqdm import tqdm
 import numpy as np
 
-from BioMime.utils.args import args, cfg
+d = sys.path
+a = os.getcwd()
+b = os.getcwdb()
+c = os.get_exec_path()
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from ..BioMime.utils.args import args, cfg
 from BioMime.utils.data import MuapWave
 from BioMime.utils.loss_functions import nrmse_matrix_torch
 from BioMime.models.generator import Generator

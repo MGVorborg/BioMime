@@ -2,7 +2,7 @@ import argparse
 import sys
 sys.path.append('.')
 
-from utils.basics import update_config
+from BioMime.utils.basics import update_config
 
 # Define arguments
 parser = argparse.ArgumentParser(description='Morph Waveforms')
