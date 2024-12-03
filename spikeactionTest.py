@@ -1,80 +1,59 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.signal import convolve
 
-# Step 1: Generate Multiple Spike Trains
-def generate_spike_train(duration, rate):
-    """Generate a spike train using a Poisson process."""
-    time = np.arange(0, duration, 0.001)  # time vector in seconds
-    spike_train = np.random.poisson(rate * 0.001, len(time))
-    return time, spike_train
-
-# Step 2: Simulate Multiple MUAPs
-def simulate_muap(frequency, decay):
-    """Create a simple MUAP template."""
-    t = np.linspace(0, 0.01, 100)  # 10 ms duration
-    muap = np.exp(-t / decay) * np.sin(2 * np.pi * frequency * t)  # Example MUAP waveform
+def generate_muap(duration=0.042, sampling_rate=1000):
+    t = np.linspace(0, duration, int(duration * sampling_rate))
+    muap = np.exp(-((t - duration / 2) ** 2) / (2 * (duration / 10) ** 2))
     return muap
 
-# Step 3: Convolve Each Spike Train with Its Corresponding MUAP
-def convolve_spike_train_with_muap(spike_train, muap):
-    """Convolve spike train with MUAP to generate EMG signal."""
-    emg_signal = convolve(spike_train, muap, mode='same')
-    return emg_signal
+def generate_spike_train(firing_rate, duration=4, muap_duration=0.042):
+    # Define the time vector
+    t = np.linspace(0, duration, int(duration * 1000))  # 1 ms time steps
 
-# Step 4: Sum the Resulting EMG Signals
-def sum_emg_signals(emg_signals):
-    """Sum multiple EMG signals."""
-    return np.sum(emg_signals, axis=0)
+    # Create a trapezoidal firing rate profile
+    ramp_up_duration = int(0.2 * len(t))  # 20% of the total duration
+    plateau_duration = int(0.6 * len(t))  # 60% of the total duration
+    ramp_down_duration = len(t) - ramp_up_duration - plateau_duration
 
-# Step 5: Add Noise (Optional)
-def add_noise(signal, noise_level):
-    """Add Gaussian noise to the signal."""
-    noise = np.random.normal(0, noise_level, len(signal))
-    return signal + noise
+    firing_profile = np.concatenate([
+        np.linspace(0, firing_rate, ramp_up_duration),
+        np.full(plateau_duration, firing_rate),
+        np.linspace(firing_rate, 0, ramp_down_duration)
+    ])
 
-# Parameters
-duration = 1.0  # 1 second
-rates = [10, 30]  # Spike rates for two motor units
-frequencies = [50, 70]  # Frequencies for two MUAPs
-decays = [0.002, 0.003]  # Decay constants for two MUAPs
-noise_level = 0.1
+    # Generate the spike train
+    spike_train = np.random.poisson(firing_profile / 1000)
 
-# Generate spike trains and MUAPs
-time, spike_train1 = generate_spike_train(duration, rates[0])
-_, spike_train2 = generate_spike_train(duration, rates[1])
-muap1 = simulate_muap(frequencies[0], decays[0])
-muap2 = simulate_muap(frequencies[1], decays[1])
+    # Generate the MUAP
+    muap = generate_muap(duration=muap_duration)
 
-# Convolve spike trains with MUAPs
-emg_signal1 = convolve_spike_train_with_muap(spike_train1, muap1)
-emg_signal2 = convolve_spike_train_with_muap(spike_train2, muap2)
+    # Convolve the spike train with the MUAP
+    convolved_signal = np.convolve(spike_train, muap, mode='same')
 
-# Sum the resulting EMG signals
-emg_signal = sum_emg_signals([emg_signal1, emg_signal2])
+    # Normalize the convolved signal so it doesn't exceed 1 in amplitude
+    #convolved_signal = convolved_signal / np.max(convolved_signal)
 
-# Add noise
-emg_signal_noisy = add_noise(emg_signal, noise_level)
+    return t, firing_profile, convolved_signal
 
-# Plot results
-plt.figure(figsize=(12, 8))
-plt.subplot(4, 1, 1)
-plt.plot(time, spike_train1, label='Spike Train 1')
-plt.legend()
+# Example usage
+firing_rate = 11  # Example firing rate in Hz
+t, firing_profile, convolved_signal = generate_spike_train(firing_rate)
 
-plt.subplot(4, 1, 2)
-plt.plot(time, spike_train2, label='Spike Train 2')
-plt.legend()
+# Plot the trapezoidal firing rate profile and the convolved signal
+fig, ax1 = plt.subplots()
 
-plt.subplot(4, 1, 3)
-plt.plot(muap1, label='MUAP 1')
-plt.plot(muap2, label='MUAP 2')
-plt.legend()
+color = 'tab:blue'
+ax1.set_xlabel('Time (s)')
+ax1.set_ylabel('Firing Rate (Hz)', color=color)
+ax1.plot(t, firing_profile, color=color, label='Firing Rate Profile')
+ax1.tick_params(axis='y', labelcolor=color)
 
-plt.subplot(4, 1, 4)
-plt.plot(time, emg_signal_noisy, label='Simulated EMG with Noise')
-plt.legend()
+ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+color = 'tab:red'
+ax2.set_ylabel('Amplitude', color=color)  # we already handled the x-label with ax1
+ax2.plot(t, convolved_signal, color=color, label='Convolved Signal')
+ax2.tick_params(axis='y', labelcolor=color)
 
-plt.xlabel('Time (s)')
-plt.tight_layout()
+fig.tight_layout()  # otherwise the right y-label is slightly clipped
+plt.title('Trapezoidal Firing Rate Profile and Convolved Spike Train Signal')
 plt.show()
