@@ -30,7 +30,7 @@ def plot_trapezoidal_spike_example():
 	sample_rate = 1000
 
 	time = np.linspace(0, duration, int(duration * sample_rate))
-	profile = generate_trapezoidal_firing_profile(time, 20, 0.2)
+	profile = generate_trapezoidal_firing_profile(time, 20, 0.10)
 	spike = generate_spike_train(sample_rate, profile)
 
 	# Plot the trapezoidal firing rate profile and the spikes
@@ -49,10 +49,10 @@ def plot_trapezoidal_spike_example():
 	ax2.tick_params(axis='y', labelcolor=color)
 
 	fig.tight_layout()  # otherwise the right y-label is slightly clipped
-	plt.title('Trapezoidal Firing Rate Profile and with spike train')
+	#plt.title('Trapezoidal Firing Rate Profile and with spike train')
 	plt.show()
 
-def generate_trapezoidal_firing_profile(time, fire_rate=15, ramp_duration=0.2):
+def generate_trapezoidal_firing_profile(time, fire_rate=15, ramp_duration=0.4):
 	"""Generate a trapezoidal firing profile based on given firing rate and duration of ramp up/down"""
 	# Create a trapezoidal firing rate profile
 	ramp_up_duration = int(ramp_duration * len(time)) 
@@ -98,7 +98,7 @@ def interpolate(signal):
 
 	return new_signal
 	
-def generateEMG(muaps, muapSampleNumber, duration, sample_rate, spike_train_firing_rate):
+def generateEMG(muaps, muapSampleNumber, duration, sample_rate, spike_train_firing_rate,spike_train_ramp_duration):
 	"""Simulate an EMG signal based on Motor Unit Action Potentials (MUAPs)"""
 	EMGlist = []
 
@@ -112,7 +112,7 @@ def generateEMG(muaps, muapSampleNumber, duration, sample_rate, spike_train_firi
 			# Generate a spike train
 			time = np.linspace(0, duration, int(duration * sample_rate))
 
-			firing_profile = generate_trapezoidal_firing_profile(time, spike_train_firing_rate, ramp_duration=0.3)
+			firing_profile = generate_trapezoidal_firing_profile(time, spike_train_firing_rate, spike_train_ramp_duration)
 
 			current_spike = generate_spike_train(sample_rate,firing_profile)
 
@@ -134,10 +134,12 @@ muaps = loadMUAPsSample(r"C:\Users\Morten\Documents\GitHub\BioMime\res\muaps_sam
 #plot_All_muaps(muaps)
 #plot_trapezoidal_spike_example()
 
+muaps_sample_number = 4
 duration = 4 # seconds
 sample_rate = 1000 # Hz
-spike_train_firing_rate = 20 # Hz (estimated to be between ~8 and ~30)
-emgs,time = generateEMG(muaps,0,duration,sample_rate,spike_train_firing_rate)
+spike_train_firing_rate = 15 # Hz (estimated to be between ~8 and ~30)
+spike_train_ramp_duration = 0.5
+emgs,time = generateEMG(muaps,muaps_sample_number,duration,sample_rate,spike_train_firing_rate,spike_train_ramp_duration)
 
 summed_emgs = sum_emg_signals(emgs)
 
